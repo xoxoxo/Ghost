@@ -22,6 +22,7 @@ describe('Unit: models/settings', function () {
 
         afterEach(function () {
             mockDb.unmock(knex);
+            tracker.uninstall();
         });
 
         beforeEach(function () {
@@ -59,16 +60,12 @@ describe('Unit: models/settings', function () {
         });
 
         it('emits edit events', function () {
-            tracker.on('query', (query, step) => {
-                return [
-                    function fetchEditQuery() {
-                        query.response([{
-                            id: 1, // NOTE: `id` imitates existing value for 'edit' event
-                            key: 'description',
-                            value: 'db value'
-                        }]);
-                    }
-                ][step - 1]();
+            tracker.on('query', (query) => {
+                return query.response([{
+                    id: 1, // NOTE: `id` imitates existing value for 'edit' event
+                    key: 'description',
+                    value: 'db value'
+                }]);
             });
 
             return models.Settings.edit({
@@ -137,7 +134,7 @@ describe('Unit: models/settings', function () {
             return models.Settings.populateDefaults()
                 .then(() => {
                     const eventsEmitted = eventSpy.args.map(args => args[0]);
-                    const checkEventNotEmitted = event => should.ok(!eventsEmitted.includes(event), `${event} event should be emitted`);
+                    const checkEventNotEmitted = event => should.ok(!eventsEmitted.includes(event), `${event} event should not be emitted`);
                     checkEventNotEmitted('settings.description.added');
                 });
         });
